@@ -248,9 +248,9 @@ function DiacriticGlyph({ keyItem }: { keyItem: KeyItem }) {
   )
 }
 
-function KeyButton({ keyItem, selected, favorite, selectionMode, menuScript, showFavoriteMark = true, showShortcut = false, onInsert, onToggleSelection, onMouseDown }: { keyItem: KeyItem; selected: boolean; favorite: boolean; selectionMode: boolean; menuScript: MenuScript; showFavoriteMark?: boolean; showShortcut?: boolean; onInsert: (key: KeyItem, shiftKey?: boolean) => void; onToggleSelection: (key: KeyItem) => void; onMouseDown?: (event: ReactMouseEvent<HTMLElement>) => void }) {
+function KeyButton({ keyItem, selected, favorite, selectionMode, menuScript, language, showFavoriteMark = true, showShortcut = false, onInsert, onToggleSelection, onMouseDown }: { keyItem: KeyItem; selected: boolean; favorite: boolean; selectionMode: boolean; menuScript: MenuScript; language: LanguageId; showFavoriteMark?: boolean; showShortcut?: boolean; onInsert: (key: KeyItem, shiftKey?: boolean) => void; onToggleSelection: (key: KeyItem) => void; onMouseDown?: (event: ReactMouseEvent<HTMLElement>) => void }) {
   const onClick = (event: ReactMouseEvent<HTMLButtonElement>) => selectionMode ? onToggleSelection(keyItem) : onInsert(keyItem, event.shiftKey)
-  const scriptText = (value: string) => applyMenuScript(value, menuScript)
+  const scriptText = (value: string) => applyMenuScript(value, menuScript, language)
   const label = `${scriptText(keyItem.category === 'standard' ? 'Standart harf' : 'Diyakritik')} ${keyItem.label}`
   const shortcut = showShortcut && keyItem.category === 'diacritic' ? getDiacriticShortcutCode(keyItem.id) : undefined
   const shortcutLabel = shortcut ? ` · ${scriptText('Kısayol')} ${shortcut}` : ''
@@ -330,7 +330,7 @@ function App() {
 
   const currentFile = files.find((file) => file.id === currentFileId)
   const theme: Theme = themePreference === 'system' ? (systemDark ? 'dark' : 'light') : themePreference
-  const t = (key: TranslationKey) => applyMenuScript(translate(language, key), menuScript)
+  const t = (key: TranslationKey) => applyMenuScript(translate(language, key), menuScript, language)
   const mt = t
   const scriptLabel = (value: MenuScript) => menuScriptLabel(language, value)
 
@@ -1032,7 +1032,7 @@ function App() {
 
   const renderKeys = (keys: KeyItem[], selectionMode = false, showFavoriteMark = true) => (
     <div className="keys-grid">
-      {keys.map((key) => <KeyButton key={key.id} keyItem={key} selected={selectionMode ? favoriteDraft.includes(key.id) : false} favorite={favorites.includes(key.id)} selectionMode={selectionMode} menuScript={menuScript} showFavoriteMark={showFavoriteMark} showShortcut={shortcutMode} onInsert={insertKey} onToggleSelection={toggleFavoriteSelection} onMouseDown={keepEditorFocus} />)}
+      {keys.map((key) => <KeyButton key={key.id} keyItem={key} selected={selectionMode ? favoriteDraft.includes(key.id) : false} favorite={favorites.includes(key.id)} selectionMode={selectionMode} menuScript={menuScript} language={language} showFavoriteMark={showFavoriteMark} showShortcut={shortcutMode} onInsert={insertKey} onToggleSelection={toggleFavoriteSelection} onMouseDown={keepEditorFocus} />)}
       {keys.length === 0 && <p className="empty-keys">{t('noMatches')}</p>}
     </div>
   )
