@@ -29,6 +29,26 @@ type MenuId = 'file' | 'edit' | 'view' | 'characters' | 'misc' | 'more'
 type PrimaryMenuId = Exclude<MenuId, 'more'>
 type DownloadFormat = 'txt' | 'md'
 
+type StoredPreferences = {
+  themePreference?: ThemePreference
+  theme?: Theme
+  language?: LanguageId
+  menuScript?: MenuScript
+  normalisation?: Normalisation
+  paletteMode?: PaletteMode
+  paletteFilter?: PaletteFilter
+  sortDirection?: SortDirection
+  palettePlacement?: PalettePlacement
+  shortcutMode?: boolean
+  capsMode?: boolean
+  shiftMode?: boolean
+  showLineNumbers?: boolean
+  wrapText?: boolean
+  recent?: string[]
+  favorites?: string[]
+  currentFileId?: string
+}
+
   const primaryMenuItems: Array<{ id: PrimaryMenuId; label: string }> = [
   { id: 'file', label: 'Dosya' },
   { id: 'edit', label: 'Düzenle' },
@@ -52,13 +72,30 @@ type SelectionToolbarPosition = {
 const DRAFT_PREFERENCES_KEY = 'kripsiyon-preferences-v2'
 const MAX_RECENT = 10
 
+const DEFAULT_PREFERENCES = {
+  normalisation: 'unchanged' as Normalisation,
+  paletteMode: 'uppercase' as PaletteMode,
+  paletteFilter: 'all' as PaletteFilter,
+  sortDirection: 'az' as SortDirection,
+  palettePlacement: 'bottom' as PalettePlacement,
+  shortcutMode: true,
+  capsMode: true,
+  shiftMode: true,
+  showLineNumbers: true,
+  wrapText: true,
+}
+
 function systemPrefersDark() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
 function storedThemePreference() {
-  const preferences = readJson<{ themePreference?: ThemePreference; theme?: Theme }>(DRAFT_PREFERENCES_KEY, {})
+  const preferences = readJson<StoredPreferences>(DRAFT_PREFERENCES_KEY, {})
   return preferences.themePreference ?? preferences.theme ?? 'system'
+}
+
+function readStoredPreferences() {
+  return readJson<StoredPreferences>(DRAFT_PREFERENCES_KEY, {})
 }
 
 function readJson<T>(key: string, fallback: T): T {
@@ -241,29 +278,29 @@ function App() {
   const bootstrapStarted = useRef(false)
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => storedThemePreference())
   const [systemDark, setSystemDark] = useState(systemPrefersDark)
-  const [language, setLanguage] = useState<LanguageId>(() => readJson<{ language?: LanguageId }>(DRAFT_PREFERENCES_KEY, {}).language ?? 'tr')
+  const [language, setLanguage] = useState<LanguageId>(() => readStoredPreferences().language ?? 'tr')
   const [files, setFiles] = useState<LocalFile[]>([])
   const [currentFileId, setCurrentFileId] = useState('')
   const [storageReady, setStorageReady] = useState(false)
   const [editor, setEditor] = useState<Snapshot>({ text: '', selection: { start: 0, end: 0 } })
   const [past, setPast] = useState<Snapshot[]>([])
   const [future, setFuture] = useState<Snapshot[]>([])
-  const [normalisation, setNormalisation] = useState<Normalisation>('unchanged')
-  const [paletteMode, setPaletteMode] = useState<PaletteMode>(() => readJson<{ paletteMode?: PaletteMode }>(DRAFT_PREFERENCES_KEY, {}).paletteMode ?? 'uppercase')
-  const [paletteFilter, setPaletteFilter] = useState<PaletteFilter>(() => readJson<{ paletteFilter?: PaletteFilter }>(DRAFT_PREFERENCES_KEY, {}).paletteFilter ?? 'all')
-  const [sortDirection, setSortDirection] = useState<SortDirection>(() => readJson<{ sortDirection?: SortDirection }>(DRAFT_PREFERENCES_KEY, {}).sortDirection ?? 'az')
-  const [palettePlacement, setPalettePlacement] = useState<PalettePlacement>(() => readJson<{ palettePlacement?: PalettePlacement }>(DRAFT_PREFERENCES_KEY, {}).palettePlacement ?? 'bottom')
-  const [shortcutMode, setShortcutMode] = useState(() => readJson<{ shortcutMode?: boolean }>(DRAFT_PREFERENCES_KEY, {}).shortcutMode ?? false)
-  const [capsMode, setCapsMode] = useState(() => readJson<{ capsMode?: boolean }>(DRAFT_PREFERENCES_KEY, {}).capsMode ?? false)
-  const [shiftMode, setShiftMode] = useState(() => readJson<{ shiftMode?: boolean }>(DRAFT_PREFERENCES_KEY, {}).shiftMode ?? false)
-  const [showLineNumbers, setShowLineNumbers] = useState(() => readJson<{ showLineNumbers?: boolean }>(DRAFT_PREFERENCES_KEY, {}).showLineNumbers ?? true)
-  const [wrapText, setWrapText] = useState(() => readJson<{ wrapText?: boolean }>(DRAFT_PREFERENCES_KEY, {}).wrapText ?? true)
+  const [normalisation, setNormalisation] = useState<Normalisation>(() => readStoredPreferences().normalisation ?? DEFAULT_PREFERENCES.normalisation)
+  const [paletteMode, setPaletteMode] = useState<PaletteMode>(() => readStoredPreferences().paletteMode ?? DEFAULT_PREFERENCES.paletteMode)
+  const [paletteFilter, setPaletteFilter] = useState<PaletteFilter>(() => readStoredPreferences().paletteFilter ?? DEFAULT_PREFERENCES.paletteFilter)
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => readStoredPreferences().sortDirection ?? DEFAULT_PREFERENCES.sortDirection)
+  const [palettePlacement, setPalettePlacement] = useState<PalettePlacement>(() => readStoredPreferences().palettePlacement ?? DEFAULT_PREFERENCES.palettePlacement)
+  const [shortcutMode, setShortcutMode] = useState(() => readStoredPreferences().shortcutMode ?? DEFAULT_PREFERENCES.shortcutMode)
+  const [capsMode, setCapsMode] = useState(() => readStoredPreferences().capsMode ?? DEFAULT_PREFERENCES.capsMode)
+  const [shiftMode, setShiftMode] = useState(() => readStoredPreferences().shiftMode ?? DEFAULT_PREFERENCES.shiftMode)
+  const [showLineNumbers, setShowLineNumbers] = useState(() => readStoredPreferences().showLineNumbers ?? DEFAULT_PREFERENCES.showLineNumbers)
+  const [wrapText, setWrapText] = useState(() => readStoredPreferences().wrapText ?? DEFAULT_PREFERENCES.wrapText)
   const [lineNumberCounts, setLineNumberCounts] = useState<number[]>([1])
   const [capsLockOn, setCapsLockOn] = useState(false)
   const [shiftPaletteMode, setShiftPaletteMode] = useState<PaletteMode | null>(null)
   const [query, setQuery] = useState('')
-  const [recent, setRecent] = useState<string[]>(() => readJson<{ recent?: string[] }>(DRAFT_PREFERENCES_KEY, {}).recent ?? [])
-  const [favorites, setFavorites] = useState<string[]>(() => readJson<{ favorites?: string[] }>(DRAFT_PREFERENCES_KEY, {}).favorites ?? [])
+  const [recent, setRecent] = useState<string[]>(() => readStoredPreferences().recent ?? [])
+  const [favorites, setFavorites] = useState<string[]>(() => readStoredPreferences().favorites ?? [])
   const [favoriteMode, setFavoriteMode] = useState(false)
   const [favoriteDraft, setFavoriteDraft] = useState<string[]>([])
   const [favoriteConfirmOpen, setFavoriteConfirmOpen] = useState(false)
@@ -278,7 +315,7 @@ function App() {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [scriptMenuOpen, setScriptMenuOpen] = useState(false)
-  const [menuScript, setMenuScript] = useState<MenuScript>(() => readJson<{ menuScript?: MenuScript }>(DRAFT_PREFERENCES_KEY, {}).menuScript ?? 'native')
+  const [menuScript, setMenuScript] = useState<MenuScript>(() => readStoredPreferences().menuScript ?? 'native')
   const [visibleMenuCount, setVisibleMenuCount] = useState(() => typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : primaryMenuItems.length)
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
@@ -364,14 +401,32 @@ function App() {
   }, [shiftMode, shiftPaletteMode, paletteMode])
 
   useEffect(() => {
-    if (!storageReady) return
-    writeJson(DRAFT_PREFERENCES_KEY, { themePreference, language, menuScript, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId })
-  }, [themePreference, language, menuScript, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId, storageReady])
+    const stored = readStoredPreferences()
+    writeJson(DRAFT_PREFERENCES_KEY, {
+      ...stored,
+      themePreference,
+      language,
+      menuScript,
+      normalisation,
+      recent,
+      favorites,
+      paletteMode,
+      paletteFilter,
+      sortDirection,
+      palettePlacement,
+      shortcutMode,
+      capsMode,
+      shiftMode,
+      showLineNumbers,
+      wrapText,
+      ...(storageReady && currentFileId ? { currentFileId } : {}),
+    })
+  }, [themePreference, language, menuScript, normalisation, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId, storageReady])
 
   useEffect(() => {
     if (bootstrapStarted.current) return
     bootstrapStarted.current = true
-    const preferences = readJson<{ currentFileId?: string }>(DRAFT_PREFERENCES_KEY, {})
+    const preferences = readStoredPreferences()
     listLocalFiles()
       .then(async (storedFiles) => {
         const nextFiles = storedFiles.length > 0 ? storedFiles : [await createLocalFile(1)]
