@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#C8C5BD" />
+    <meta name="description" content="Türk dili ve edebiyatı araştırmaları için Unicode transkripsiyon aracı." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>Çözgü</title>
+    <script>
+      (() => {
+        try {
+          const stored = JSON.parse(localStorage.getItem('kripsiyon-preferences-v2') || '{}')
+          const preference = stored.themePreference || stored.theme || 'system'
+          const resolved = preference === 'dark' || (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+          document.documentElement.dataset.theme = resolved
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolved === 'dark' ? '#171D1F' : '#C8C5BD')
+        } catch {
+          document.documentElement.dataset.theme = 'dark'
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#171D1F')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

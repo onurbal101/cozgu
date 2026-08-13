@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Çözgü">
+  <rect width="512" height="512" rx="84" fill="#171d1f"/>
+  <circle cx="256" cy="256" r="181" fill="#222a2d" stroke="#77a0a2" stroke-width="13"/>
+  <text x="256" y="337" text-anchor="middle" fill="#e6e0d4" font-family="Noto Sans Old Turkic, Noto Sans Symbols 2, sans-serif" font-size="245">𐰲</text>
+  <circle cx="394" cy="382" r="30" fill="#c5815d"/>
+</svg>
