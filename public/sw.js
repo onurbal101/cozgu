@@ -1,5 +1,16 @@
-const CACHE_NAME = 'cozgu-shell-v1'
-const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/icons/cozgu-192.svg', '/icons/cozgu-512.svg']
+const CACHE_NAME = 'cozgu-shell-v2'
+const SHELL = [
+  '/',
+  '/index.html',
+  '/manifest.webmanifest',
+  '/icons/cozgu-16.png',
+  '/icons/cozgu-32.png',
+  '/icons/cozgu-180.png',
+  '/icons/cozgu-192.png',
+  '/icons/cozgu-512.png',
+  '/icons/cozgu-192.svg',
+  '/icons/cozgu-512.svg',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)))
