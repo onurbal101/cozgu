@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyMenuScript, menuScriptLabel, toCyrillic, toLatin } from './menuScripts'
+import { applyMenuScript, isNativeMenuScript, menuScriptLabel, nativeMenuScript, normalizeMenuScript, toCyrillic, toLatin } from './menuScripts'
 
 describe('menu-only script display', () => {
   it('transliterates Latin menu labels to a Cyrillic display form', () => {
@@ -18,10 +18,16 @@ describe('menu-only script display', () => {
     expect(toLatin('Қазақ', 'kk')).toBe('Qazaq')
   })
 
-  it('keeps native display unchanged and exposes stable selector labels', () => {
-    expect(applyMenuScript('Dosya', 'native')).toBe('Dosya')
-    expect(menuScriptLabel('tr', 'native')).toBe('Yerel')
+  it('uses concrete script options and migrates the old native value', () => {
+    expect(applyMenuScript('Dosya', 'latin')).toBe('Dosya')
+    expect(menuScriptLabel('tr', 'latin')).toBe('Latin')
     expect(menuScriptLabel('en', 'cyrillic')).toBe('Kiril')
+    expect(nativeMenuScript('tr')).toBe('latin')
+    expect(nativeMenuScript('kk')).toBe('cyrillic')
+    expect(normalizeMenuScript('native', 'tr')).toBe('latin')
+    expect(normalizeMenuScript('native', 'kk')).toBe('cyrillic')
+    expect(isNativeMenuScript('tr', 'latin')).toBe(true)
+    expect(isNativeMenuScript('tr', 'cyrillic')).toBe(false)
   })
 
   it('keeps technical terms unchanged while converting surrounding labels', () => {

@@ -4,7 +4,7 @@ import type { LanguageId } from '../i18n'
  * A menu script changes the visible labels in the application menus only.
  * It never changes editor text, palette characters, file names, or exports.
  */
-export type MenuScript = 'native' | 'latin' | 'cyrillic'
+export type MenuScript = 'latin' | 'cyrillic'
 
 export type MenuScriptOption = {
   id: MenuScript
@@ -12,10 +12,30 @@ export type MenuScriptOption = {
 }
 
 export const MENU_SCRIPT_OPTIONS: MenuScriptOption[] = [
-  { id: 'native', label: 'Native' },
   { id: 'latin', label: 'Latin' },
   { id: 'cyrillic', label: 'Kiril' },
 ]
+
+/**
+ * The first script in the selector is the script used by the selected
+ * language's menu translations. Old saved `native` values are migrated to
+ * this concrete script before they reach the application state.
+ */
+const cyrillicMenuLanguages = new Set<LanguageId>(['kk', 'tt', 'ky', 'ba', 'cv', 'ru'])
+
+export function nativeMenuScript(language: LanguageId): MenuScript {
+  return cyrillicMenuLanguages.has(language) ? 'cyrillic' : 'latin'
+}
+
+export function normalizeMenuScript(value: unknown, language: LanguageId): MenuScript {
+  if (value === 'cyrillic') return 'cyrillic'
+  if (value === 'latin') return 'latin'
+  return nativeMenuScript(language)
+}
+
+export function isNativeMenuScript(language: LanguageId, script: MenuScript) {
+  return nativeMenuScript(language) === script
+}
 
 type ScriptEntry = [string, string]
 
@@ -122,6 +142,6 @@ export function applyMenuScript(value: string, script: MenuScript, language: Lan
 }
 
 export function menuScriptLabel(language: LanguageId, script: MenuScript) {
-  if (script === 'native') return language === 'tr' ? 'Yerel' : 'Native'
+  void language
   return script === 'latin' ? 'Latin' : 'Kiril'
 }

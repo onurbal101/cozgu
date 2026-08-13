@@ -15,7 +15,7 @@ import {
 import { applyDiacriticRepeated, countGraphemes, countLines, countWords, insertAtSelection, segmentGraphemes, type Selection } from './lib/editor'
 import { createLocalFile, deleteLocalFile, listLocalFiles, saveLocalFile, type LocalFile } from './lib/files'
 import { LANGUAGE_OPTIONS, translate, type LanguageId, type TranslationKey } from './i18n'
-import { applyMenuScript, menuScriptLabel, type MenuScript } from './lib/menuScripts'
+import { applyMenuScript, isNativeMenuScript, menuScriptLabel, normalizeMenuScript, type MenuScript } from './lib/menuScripts'
 import { getDiacriticShortcut, getDiacriticShortcutCode } from './lib/shortcuts'
 
 type Theme = 'light' | 'dark'
@@ -317,7 +317,10 @@ function App() {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [scriptMenuOpen, setScriptMenuOpen] = useState(false)
-  const [menuScript, setMenuScript] = useState<MenuScript>(() => readStoredPreferences().menuScript ?? 'native')
+  const [menuScript, setMenuScript] = useState<MenuScript>(() => {
+    const preferences = readStoredPreferences()
+    return normalizeMenuScript(preferences.menuScript, preferences.language ?? 'tr')
+  })
   const [visibleMenuCount, setVisibleMenuCount] = useState(() => typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : primaryMenuItems.length)
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
@@ -1159,7 +1162,7 @@ function App() {
           </div>
           <div className="topbar-menu script-menu" data-topbar-menu>
             <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={scriptMenuOpen} aria-label={t('script')} onClick={() => { setScriptMenuOpen((value) => !value); setThemeMenuOpen(false); setLanguageMenuOpen(false) }}><span>{scriptLabel(menuScript)}</span><Icon name="chevron" size={13} /></button>
-            {scriptMenuOpen && <div className="topbar-popover script-popover" role="menu"><p className="script-popover-note">{t('scriptInfo')}</p>{(['native', 'latin', 'cyrillic'] as MenuScript[]).map((item) => <button className="topbar-menu-item" role="menuitemradio" aria-checked={item === menuScript} type="button" key={item} onClick={() => { setMenuScript(item); setScriptMenuOpen(false) }}>{scriptLabel(item)}{item === menuScript && <Icon name="check" size={14} />}</button>)}</div>}
+            {scriptMenuOpen && <div className="topbar-popover script-popover" role="menu"><p className="script-popover-note">{t('scriptInfo')}</p>{(['latin', 'cyrillic'] as MenuScript[]).map((item) => <button className="topbar-menu-item script-option" role="menuitemradio" aria-checked={item === menuScript} type="button" key={item} onClick={() => { setMenuScript(item); setScriptMenuOpen(false) }}><span className="script-option-label">{scriptLabel(item)}{isNativeMenuScript(language, item) && <span className="script-native-badge">{translate(language, 'nativeScript')}</span>}</span>{item === menuScript && <Icon name="check" size={14} />}</button>)}</div>}
           </div>
         </div>
       </header>
