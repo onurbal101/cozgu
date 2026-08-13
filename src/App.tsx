@@ -312,6 +312,8 @@ function App() {
   const [openSubmenu, setOpenSubmenu] = useState<'normalisation' | 'area' | 'shortcuts' | null>(null)
   const [shortcutInfoOpen, setShortcutInfoOpen] = useState<'shift' | 'caps' | 'qq' | null>(null)
   const shortcutInfoTimer = useRef<number | null>(null)
+  const [normalisationInfoOpen, setNormalisationInfoOpen] = useState<Normalisation | null>(null)
+  const normalisationInfoTimer = useRef<number | null>(null)
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
   const [scriptMenuOpen, setScriptMenuOpen] = useState(false)
@@ -341,6 +343,17 @@ function App() {
     if (shortcutInfoTimer.current !== null) window.clearTimeout(shortcutInfoTimer.current)
     shortcutInfoTimer.current = null
     setShortcutInfoOpen(null)
+  }
+
+  const showNormalisationInfo = (id: Normalisation) => {
+    if (normalisationInfoTimer.current !== null) window.clearTimeout(normalisationInfoTimer.current)
+    normalisationInfoTimer.current = window.setTimeout(() => setNormalisationInfoOpen(id), 650)
+  }
+
+  const hideNormalisationInfo = () => {
+    if (normalisationInfoTimer.current !== null) window.clearTimeout(normalisationInfoTimer.current)
+    normalisationInfoTimer.current = null
+    setNormalisationInfoOpen(null)
   }
 
   useEffect(() => {
@@ -1071,7 +1084,15 @@ function App() {
     })}
   </div>
 
-  const submenuItem = (label: string, id: 'normalisation' | 'area' | 'shortcuts') => <div className="menu-item menu-item-branch" role="menuitem" tabIndex={0} aria-haspopup="menu" aria-expanded={openSubmenu === id} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setOpenSubmenu(id)} onFocus={() => setOpenSubmenu(id)} onClick={() => setOpenSubmenu(id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpenSubmenu(id) } }}><span>{label}</span><span aria-hidden="true">›</span>{openSubmenu === id && <div className="menu-subpopover" role="menu">{id === 'normalisation' ? <>{menuItem(mt('unchanged'), () => { changeNormalisation('unchanged'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'unchanged' })}{menuItem(mt('nfc'), () => { changeNormalisation('NFC'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFC' })}{menuItem(mt('nfd'), () => { changeNormalisation('NFD'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFD' })}</> : id === 'area' ? <>{menuItem(mt('bottom'), () => { setPalettePlacement('bottom'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'bottom' })}{menuItem(mt('top'), () => { setPalettePlacement('top'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'top' })}{menuItem(mt('left'), () => { setPalettePlacement('left'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'left' })}{menuItem(mt('right'), () => { setPalettePlacement('right'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'right' })}</> : shortcutSubmenu}</div>}</div>
+  const normalisationOption = (id: Normalisation, label: string, info: string) => <div className="shortcut-row normalisation-row" key={id}>
+    {menuItem(label, () => { changeNormalisation(id); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === id })}
+    <div className="shortcut-info">
+      <button className="shortcut-info-trigger" type="button" aria-label={info} onMouseEnter={() => showNormalisationInfo(id)} onMouseLeave={hideNormalisationInfo} onFocus={() => showNormalisationInfo(id)} onBlur={hideNormalisationInfo}><span aria-hidden="true">i</span></button>
+      {normalisationInfoOpen === id && <div className="shortcut-info-popover" role="note">{info}</div>}
+    </div>
+  </div>
+
+  const submenuItem = (label: string, id: 'normalisation' | 'area' | 'shortcuts') => <div className="menu-item menu-item-branch" role="menuitem" tabIndex={0} aria-haspopup="menu" aria-expanded={openSubmenu === id} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setOpenSubmenu(id)} onFocus={() => setOpenSubmenu(id)} onClick={() => setOpenSubmenu(id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpenSubmenu(id) } }}><span>{label}</span><span aria-hidden="true">›</span>{openSubmenu === id && <div className="menu-subpopover" role="menu">{id === 'normalisation' ? <>{normalisationOption('unchanged', mt('unchanged'), mt('unchangedInfo'))}{normalisationOption('NFC', mt('nfc'), mt('nfcInfo'))}{normalisationOption('NFD', mt('nfd'), mt('nfdInfo'))}</> : id === 'area' ? <>{menuItem(mt('bottom'), () => { setPalettePlacement('bottom'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'bottom' })}{menuItem(mt('top'), () => { setPalettePlacement('top'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'top' })}{menuItem(mt('left'), () => { setPalettePlacement('left'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'left' })}{menuItem(mt('right'), () => { setPalettePlacement('right'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'right' })}</> : shortcutSubmenu}</div>}</div>
 
   const openMenuItems = (id: MenuId) => {
     if (id === 'file') return <>
