@@ -15,6 +15,7 @@ import {
 import { applyDiacriticRepeated, countGraphemes, countLines, countWords, insertAtSelection, segmentGraphemes, type Selection } from './lib/editor'
 import { createLocalFile, deleteLocalFile, listLocalFiles, saveLocalFile, type LocalFile } from './lib/files'
 import { LANGUAGE_OPTIONS, translate, type LanguageId, type TranslationKey } from './i18n'
+import { applyMenuScript, type MenuScript } from './lib/menuScripts'
 import { getDiacriticShortcut, getDiacriticShortcutCode } from './lib/shortcuts'
 
 type Theme = 'light' | 'dark'
@@ -272,6 +273,8 @@ function App() {
   const shortcutInfoTimer = useRef<number | null>(null)
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
+  const [scriptMenuOpen, setScriptMenuOpen] = useState(false)
+  const [menuScript, setMenuScript] = useState<MenuScript>(() => readJson<{ menuScript?: MenuScript }>(DRAFT_PREFERENCES_KEY, {}).menuScript ?? 'native')
   const [visibleMenuCount, setVisibleMenuCount] = useState(() => typeof window !== 'undefined' && window.innerWidth < 480 ? 3 : primaryMenuItems.length)
   const [downloadModalOpen, setDownloadModalOpen] = useState(false)
   const [downloadFormat, setDownloadFormat] = useState<DownloadFormat>('txt')
@@ -285,6 +288,9 @@ function App() {
   const currentFile = files.find((file) => file.id === currentFileId)
   const theme: Theme = themePreference === 'system' ? (systemDark ? 'dark' : 'light') : themePreference
   const t = (key: TranslationKey) => translate(language, key)
+  const mt = (key: TranslationKey) => applyMenuScript(t(key), menuScript)
+  const menuScriptTranslationKey = (value: MenuScript): TranslationKey => value === 'native' ? 'nativeScript' : value === 'latin' ? 'latinScript' : 'cyrillicScript'
+  const scriptLabel = (value: MenuScript) => t(menuScriptTranslationKey(value))
 
   const showShortcutInfo = (id: 'shift' | 'caps' | 'qq') => {
     if (shortcutInfoTimer.current !== null) window.clearTimeout(shortcutInfoTimer.current)
@@ -356,8 +362,8 @@ function App() {
 
   useEffect(() => {
     if (!storageReady) return
-    writeJson(DRAFT_PREFERENCES_KEY, { themePreference, language, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId })
-  }, [themePreference, language, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId, storageReady])
+    writeJson(DRAFT_PREFERENCES_KEY, { themePreference, language, menuScript, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId })
+  }, [themePreference, language, menuScript, recent, favorites, paletteMode, paletteFilter, sortDirection, palettePlacement, shortcutMode, capsMode, shiftMode, showLineNumbers, wrapText, currentFileId, storageReady])
 
   useEffect(() => {
     if (bootstrapStarted.current) return
@@ -414,17 +420,18 @@ function App() {
   }, [openMenu])
 
   useEffect(() => {
-    if (!themeMenuOpen && !languageMenuOpen) return undefined
+    if (!themeMenuOpen && !languageMenuOpen && !scriptMenuOpen) return undefined
     const closeSelectors = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null
       if (!target?.closest('[data-topbar-menu]')) {
         setThemeMenuOpen(false)
         setLanguageMenuOpen(false)
+        setScriptMenuOpen(false)
       }
     }
     document.addEventListener('pointerdown', closeSelectors)
     return () => document.removeEventListener('pointerdown', closeSelectors)
-  }, [themeMenuOpen, languageMenuOpen])
+  }, [themeMenuOpen, languageMenuOpen, scriptMenuOpen])
 
   useLayoutEffect(() => {
     const menuBar = menuBarRef.current
@@ -473,7 +480,7 @@ function App() {
       void fontReady
       observer?.disconnect()
     }
-  }, [])
+  }, [language, menuScript])
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -992,8 +999,8 @@ function App() {
 
   const shortcutSubmenu = <div className="shortcut-options" role="none">
     {(['shift', 'caps', 'qq'] as const).map((id) => {
-      const label = id === 'shift' ? t('shiftShortcut') : id === 'caps' ? t('capsLockShortcut') : t('qqShortcut')
-      const info = id === 'shift' ? t('shiftShortcutInfo') : id === 'caps' ? t('capsLockShortcutInfo') : t('qqShortcutInfo')
+      const label = id === 'shift' ? mt('shiftShortcut') : id === 'caps' ? mt('capsLockShortcut') : mt('qqShortcut')
+      const info = id === 'shift' ? mt('shiftShortcutInfo') : id === 'caps' ? mt('capsLockShortcutInfo') : mt('qqShortcutInfo')
       const enabled = id === 'shift' ? shiftMode : id === 'caps' ? capsMode : shortcutMode
       const toggle = id === 'shift' ? () => setShiftMode((value) => !value) : id === 'caps' ? () => setCapsMode((value) => !value) : () => setShortcutMode((value) => !value)
       return <div className="shortcut-row" key={id}>
@@ -1006,31 +1013,31 @@ function App() {
     })}
   </div>
 
-  const submenuItem = (label: string, id: 'normalisation' | 'area' | 'shortcuts') => <div className="menu-item menu-item-branch" role="menuitem" tabIndex={0} aria-haspopup="menu" aria-expanded={openSubmenu === id} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setOpenSubmenu(id)} onFocus={() => setOpenSubmenu(id)} onClick={() => setOpenSubmenu(id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpenSubmenu(id) } }}><span>{label}</span><span aria-hidden="true">›</span>{openSubmenu === id && <div className="menu-subpopover" role="menu">{id === 'normalisation' ? <>{menuItem(t('unchanged'), () => { changeNormalisation('unchanged'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'unchanged' })}{menuItem(t('nfc'), () => { changeNormalisation('NFC'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFC' })}{menuItem(t('nfd'), () => { changeNormalisation('NFD'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFD' })}</> : id === 'area' ? <>{menuItem(t('bottom'), () => { setPalettePlacement('bottom'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'bottom' })}{menuItem(t('top'), () => { setPalettePlacement('top'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'top' })}{menuItem(t('left'), () => { setPalettePlacement('left'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'left' })}{menuItem(t('right'), () => { setPalettePlacement('right'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'right' })}</> : shortcutSubmenu}</div>}</div>
+  const submenuItem = (label: string, id: 'normalisation' | 'area' | 'shortcuts') => <div className="menu-item menu-item-branch" role="menuitem" tabIndex={0} aria-haspopup="menu" aria-expanded={openSubmenu === id} onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setOpenSubmenu(id)} onFocus={() => setOpenSubmenu(id)} onClick={() => setOpenSubmenu(id)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpenSubmenu(id) } }}><span>{label}</span><span aria-hidden="true">›</span>{openSubmenu === id && <div className="menu-subpopover" role="menu">{id === 'normalisation' ? <>{menuItem(mt('unchanged'), () => { changeNormalisation('unchanged'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'unchanged' })}{menuItem(mt('nfc'), () => { changeNormalisation('NFC'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFC' })}{menuItem(mt('nfd'), () => { changeNormalisation('NFD'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: normalisation === 'NFD' })}</> : id === 'area' ? <>{menuItem(mt('bottom'), () => { setPalettePlacement('bottom'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'bottom' })}{menuItem(mt('top'), () => { setPalettePlacement('top'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'top' })}{menuItem(mt('left'), () => { setPalettePlacement('left'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'left' })}{menuItem(mt('right'), () => { setPalettePlacement('right'); setOpenMenu(null); setOpenSubmenu(null) }, { checked: palettePlacement === 'right' })}</> : shortcutSubmenu}</div>}</div>
 
   const openMenuItems = (id: MenuId) => {
     if (id === 'file') return <>
-      {menuItem(t('open'), openFileModal)}
-      {menuItem(t('new'), newFile)}
-      {menuItem(t('copy'), copy, { disabled: !editor.text })}
-      {menuItem(t('download'), openDownload, { disabled: !editor.text })}
+      {menuItem(mt('open'), openFileModal)}
+      {menuItem(mt('new'), newFile)}
+      {menuItem(mt('copy'), copy, { disabled: !editor.text })}
+      {menuItem(mt('download'), openDownload, { disabled: !editor.text })}
     </>
     if (id === 'edit') return <>
-      {menuItem(t('undo'), undo, { disabled: past.length === 0 })}
-      {menuItem(t('redo'), redo, { disabled: future.length === 0 })}
-      {menuItem(t('clear'), () => { setOpenMenu(null); setClearConfirmOpen(true) }, { disabled: !editor.text })}
+      {menuItem(mt('undo'), undo, { disabled: past.length === 0 })}
+      {menuItem(mt('redo'), redo, { disabled: future.length === 0 })}
+      {menuItem(mt('clear'), () => { setOpenMenu(null); setClearConfirmOpen(true) }, { disabled: !editor.text })}
     </>
     if (id === 'view') return <>
-      {menuItem(t('lineNumbers'), () => setShowLineNumbers((value) => !value), { checked: showLineNumbers })}
-      {menuItem(t('wrapText'), () => setWrapText((value) => !value), { checked: wrapText })}
-      {submenuItem(t('area'), 'area')}
+      {menuItem(mt('lineNumbers'), () => setShowLineNumbers((value) => !value), { checked: showLineNumbers })}
+      {menuItem(mt('wrapText'), () => setWrapText((value) => !value), { checked: wrapText })}
+      {submenuItem(mt('area'), 'area')}
     </>
     if (id === 'characters') return <>
-      {menuItem(t('special'), () => { setPaletteFilter('all'); setPaletteMode('special'); setOpenMenu(null) })}
-      {menuItem(t('diacritics'), () => { setPaletteFilter('all'); setPaletteMode('diacritic'); setOpenMenu(null) })}
-      {submenuItem(t('shortcuts'), 'shortcuts')}
+      {menuItem(mt('special'), () => { setPaletteFilter('all'); setPaletteMode('special'); setOpenMenu(null) })}
+      {menuItem(mt('diacritics'), () => { setPaletteFilter('all'); setPaletteMode('diacritic'); setOpenMenu(null) })}
+      {submenuItem(mt('shortcuts'), 'shortcuts')}
     </>
-    return <>{submenuItem(t('normalisation'), 'normalisation')}</>
+    return <>{submenuItem(mt('normalisation'), 'normalisation')}</>
   }
 
   const renderDiacriticGroups = (keys: KeyItem[], selectionMode = false, showFavoriteMark = true) => {
@@ -1064,12 +1071,16 @@ function App() {
         </div>
         <div className="topbar-right">
           <div className="topbar-menu" data-topbar-menu>
-            <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={themeMenuOpen} onClick={() => { setThemeMenuOpen((value) => !value); setLanguageMenuOpen(false) }}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /><span>{t(themePreference)}</span><Icon name="chevron" size={13} /></button>
+            <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={themeMenuOpen} onClick={() => { setThemeMenuOpen((value) => !value); setLanguageMenuOpen(false); setScriptMenuOpen(false) }}><Icon name={theme === 'dark' ? 'moon' : 'sun'} size={17} /><span>{t(themePreference)}</span><Icon name="chevron" size={13} /></button>
             {themeMenuOpen && <div className="topbar-popover" role="menu">{([themePreference, ...(['system', 'dark', 'light'] as ThemePreference[]).filter((item) => item !== themePreference)]).map((item) => <button className="topbar-menu-item" role="menuitem" type="button" key={item} onClick={() => { setThemePreference(item); setThemeMenuOpen(false) }}>{t(item)}{item === themePreference && <Icon name="check" size={14} />}</button>)}</div>}
           </div>
           <div className="topbar-menu language-menu" data-topbar-menu>
-            <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={languageMenuOpen} onClick={() => { setLanguageMenuOpen((value) => !value); setThemeMenuOpen(false) }}><span>{LANGUAGE_OPTIONS.find((item) => item.id === language)?.label ?? 'Türkçe'}</span><Icon name="chevron" size={13} /></button>
+            <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={languageMenuOpen} onClick={() => { setLanguageMenuOpen((value) => !value); setThemeMenuOpen(false); setScriptMenuOpen(false) }}><span>{LANGUAGE_OPTIONS.find((item) => item.id === language)?.label ?? 'Türkçe'}</span><Icon name="chevron" size={13} /></button>
             {languageMenuOpen && <div className="topbar-popover topbar-popover-language" role="menu">{LANGUAGE_OPTIONS.map((item) => <button className="topbar-menu-item" role="menuitem" type="button" key={item.id} onClick={() => { setLanguage(item.id); setLanguageMenuOpen(false) }}>{item.label}{item.id === language && <Icon name="check" size={14} />}</button>)}</div>}
+          </div>
+          <div className="topbar-menu script-menu" data-topbar-menu>
+            <button className="topbar-menu-trigger" type="button" aria-haspopup="menu" aria-expanded={scriptMenuOpen} aria-label={t('script')} onClick={() => { setScriptMenuOpen((value) => !value); setThemeMenuOpen(false); setLanguageMenuOpen(false) }}><span>{scriptLabel(menuScript)}</span><Icon name="chevron" size={13} /></button>
+            {scriptMenuOpen && <div className="topbar-popover script-popover" role="menu"><p className="script-popover-note">{t('scriptInfo')}</p>{(['native', 'latin', 'cyrillic'] as MenuScript[]).map((item) => <button className="topbar-menu-item" role="menuitemradio" aria-checked={item === menuScript} type="button" key={item} onClick={() => { setMenuScript(item); setScriptMenuOpen(false) }}>{scriptLabel(item)}{item === menuScript && <Icon name="check" size={14} />}</button>)}</div>}
           </div>
         </div>
       </header>
@@ -1080,14 +1091,14 @@ function App() {
             <div className="editor-toolbar" aria-label={t('textMenu')}>
               <div className="menu-bar" ref={menuBarRef} data-menu-root>
               <div className="menu-size-probe" aria-hidden="true">
-                  {primaryMenuItems.map((item) => <span data-menu-size key={item.id}>{t(item.id)}</span>)}
+                  {primaryMenuItems.map((item) => <span data-menu-size key={item.id}>{mt(item.id)}</span>)}
                   <span data-menu-overflow>…</span>
                 </div>
                 <div className="history-actions">
                   <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={undo} disabled={past.length === 0} title="Geri al" aria-label="Geri al"><Icon name="undo" size={18} /></button>
                   <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={redo} disabled={future.length === 0} title="İleri al" aria-label="İleri al"><Icon name="redo" size={18} /></button>
                 </div>
-                {primaryMenuItems.slice(0, visibleMenuCount).map((item) => <span className="menu-slot" key={item.id}>{menuButton(item.id, t(item.id))}{openMenu === item.id && <div className="menu-popover" role="menu">{openMenuItems(item.id)}</div>}</span>)}
+                {primaryMenuItems.slice(0, visibleMenuCount).map((item) => <span className="menu-slot" key={item.id}>{menuButton(item.id, mt(item.id))}{openMenu === item.id && <div className="menu-popover" role="menu">{openMenuItems(item.id)}</div>}</span>)}
                 {visibleMenuCount < primaryMenuItems.length && <span className="menu-slot menu-slot-overflow">{menuButton('more', '…', { compact: true })}{openMenu === 'more' && <div className="menu-popover menu-popover-right" role="menu">{openMenuItems('more')}</div>}</span>}
               </div>
             </div>

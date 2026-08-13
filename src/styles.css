@@ -81,6 +81,9 @@ button:disabled { cursor: not-allowed; }
 .topbar-popover-language { min-width: 170px; max-height: min(70vh, 430px); overflow-y: auto; }
 .topbar-menu-item { min-height: 32px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 5px 8px; border: 0; color: var(--ink); background: transparent; font-size: 11px; text-align: left; }
 .topbar-menu-item:hover, .topbar-menu-item:focus-visible { background: color-mix(in srgb, var(--mineral) 20%, transparent); }
+.script-menu { display: block; }
+.script-popover { width: min(290px, calc(100vw - 24px)); }
+.script-popover-note { margin: 5px 8px 7px; color: var(--muted-ink); font: 400 12px/1.35 'Source Serif 4', serif; }
 .theme-control, .compact-select, .normalisation-control { display: inline-flex; align-items: center; gap: 7px; color: var(--muted-ink); }
 .theme-control { min-height: 38px; padding: 5px 8px; border: 1px solid color-mix(in srgb, var(--rule) 64%, transparent); }
 .theme-control select, .compact-select select, .normalisation-control select { border: 0; outline: 0; color: var(--ink); background: transparent; cursor: pointer; }
