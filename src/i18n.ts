@@ -13,6 +13,12 @@ export type TranslationKey =
   | 'selectToFavorite' | 'saveSelection' | 'favoriteHeading' | 'selectedFile'
   | 'plainText' | 'markdown' | 'format' | 'downloadText' | 'downloadFileName'
   | 'transcriptionCharacters' | 'textMenu' | 'textAreaLabel' | 'textPlaceholder'
+  | 'lineCount' | 'wordCount' | 'characterCount' | 'above' | 'below' | 'combining'
+  | 'letters' | 'recentLetters' | 'searchResults' | 'noMatches'
+  | 'standardLetter' | 'diacriticLabel' | 'shortcutLabel' | 'selected' | 'notSelected' | 'favoriteMark'
+  | 'paletteView' | 'searchCharacters' | 'selectedTextTools' | 'bulkLetterActions' | 'letterForms'
+  | 'uppercaseAction' | 'lowercaseAction' | 'titleCaseAction' | 'addDiacritic' | 'increaseCount' | 'decreaseCount'
+  | 'openFavoriteMode' | 'exitFavoriteMode' | 'sortFixed' | 'sortToAZ' | 'sortToZA' | 'clearWarning' | 'changeTo' | 'times'
 
 export type TranslationTable = Partial<Record<TranslationKey, string>>
 
@@ -49,10 +55,12 @@ const turkish: Record<TranslationKey, string> = {
   selectToFavorite: 'Yıldızlamak için seçin', saveSelection: 'Seçimi kaydet', favoriteHeading: 'Yıldızlı karakterler', selectedFile: 'Seçili dosya',
   plainText: 'Düz metin (.txt)', markdown: 'Markdown (.md)', format: 'Biçim', downloadText: 'Metni indir', downloadFileName: 'Dosya adı',
   transcriptionCharacters: 'Transkripsiyon karakterleri', textMenu: 'Metin menüsü', textAreaLabel: 'Transkripsiyon metni', textPlaceholder: 'Metninizi buraya yazın',
+  lineCount: 'satır', wordCount: 'kelime', characterCount: 'karakter', above: 'Üstte', below: 'Altta', combining: 'Bağlayıcı', letters: 'Harfler', recentLetters: 'Son kullanılan harfler', searchResults: 'Arama sonuçları', noMatches: 'Bu ölçütle eşleşen karakter yok.',
+  standardLetter: 'Standart harf', diacriticLabel: 'Diyakritik', shortcutLabel: 'Kısayol', selected: 'seçildi', notSelected: 'seçilmedi', favoriteMark: 'Sık kullanılan', paletteView: 'Karakter görünümü', searchCharacters: 'Karakter ara', selectedTextTools: 'Seçili metin araçları', bulkLetterActions: 'Toplu harf işlemleri', letterForms: 'Harf biçimleri', uppercaseAction: 'Büyük harfe çevir', lowercaseAction: 'Küçük harfe çevir', titleCaseAction: 'Başlık biçimine çevir', addDiacritic: 'Diyakritik ekle', increaseCount: 'sayısını artır', decreaseCount: 'sayısını azalt', openFavoriteMode: 'Yıldızlama modunu aç', exitFavoriteMode: 'Yıldız modundan çık', sortFixed: 'Diyakritik sırası sabit', sortToAZ: 'A’dan Z’ye sırala', sortToZA: 'Z’den A’ya sırala', clearWarning: 'Bu işlem geri alınabilir.', changeTo: 'olarak değiştir', times: 'kez',
 }
 
 const english: Record<TranslationKey, string> = {
-  theme: 'Theme', language: 'Language', script: 'Script', nativeScript: 'Native', latinScript: 'Latin', cyrillicScript: 'Cyrillic', scriptInfo: 'Changes menu labels only. Your text, character palette, and exported files stay unchanged.', system: 'System', dark: 'Dark', light: 'Light',
+  theme: 'Theme', language: 'Language', script: 'Script', nativeScript: 'Native', latinScript: 'Latin', cyrillicScript: 'Kiril', scriptInfo: 'Changes menu labels only. Your text, character palette, and exported files stay unchanged.', system: 'System', dark: 'Dark', light: 'Light',
   file: 'File', edit: 'Edit', view: 'View', characters: 'Characters', misc: 'Misc.',
   undo: 'Undo', redo: 'Redo', open: 'Open', new: 'New', copy: 'Copy', download: 'Download', clear: 'Clear',
   lineNumbers: 'Line numbers', wrapText: 'Wrap lines', special: 'Special', diacritics: 'Diacritics', shortcuts: 'Shortcuts', shortcutsInfo: 'Enable these shortcuts to use the character palette faster from the keyboard.', shiftShortcut: 'Shift', capsLockShortcut: 'Caps Lock', qqShortcut: 'QQ', shiftShortcutInfo: 'Temporarily shows the Uppercase palette while you hold Shift.', capsLockShortcutInfo: 'Shows the Uppercase palette when Caps Lock turns on; manual palette changes stop the automatic switch.', qqShortcutInfo: 'Press Q, W, or X twice after a letter for its next special form. For diacritics, start with 1, 2, or 3 to choose a row, then use its key (Above: 11, 12, 13, 1q, 1w, 1e, 1z, 1x, 1c; Below: 2q, 2w, 2e, 2a, 2s; Combining: 31, 32).', titleCase: 'Title case', qqShortcuts: 'QQ shortcuts', capsLockBehavior: 'Caps Lock behaviour', shiftBehavior: 'Shift behaviour',
@@ -64,6 +72,8 @@ const english: Record<TranslationKey, string> = {
   selectToFavorite: 'Select items to star', saveSelection: 'Save selection', favoriteHeading: 'Starred characters', selectedFile: 'Selected file',
   plainText: 'Plain text (.txt)', markdown: 'Markdown (.md)', format: 'Format', downloadText: 'Download text', downloadFileName: 'File name',
   transcriptionCharacters: 'Transcription characters', textMenu: 'Text menu', textAreaLabel: 'Transcription text', textPlaceholder: 'Write or paste your text here',
+  lineCount: 'lines', wordCount: 'words', characterCount: 'characters', above: 'Above', below: 'Below', combining: 'Combining', letters: 'Letters', recentLetters: 'Recently used letters', searchResults: 'Search results', noMatches: 'No characters match this search.',
+  standardLetter: 'Standard letter', diacriticLabel: 'Diacritic', shortcutLabel: 'Shortcut', selected: 'selected', notSelected: 'not selected', favoriteMark: 'Favourite', paletteView: 'Character view', searchCharacters: 'Search characters', selectedTextTools: 'Selected text tools', bulkLetterActions: 'Bulk letter actions', letterForms: 'Letter forms', uppercaseAction: 'Make uppercase', lowercaseAction: 'Make lowercase', titleCaseAction: 'Make title case', addDiacritic: 'Add diacritic', increaseCount: 'increase count', decreaseCount: 'decrease count', openFavoriteMode: 'Open star mode', exitFavoriteMode: 'Exit star mode', sortFixed: 'Diacritic order is fixed', sortToAZ: 'Sort A to Z', sortToZA: 'Sort Z to A', clearWarning: 'This action can be undone.', changeTo: 'change to', times: 'times',
 }
 
 const az: TranslationTable = { file: 'Fayl', edit: 'Redaktə', view: 'Görünüş', characters: 'Hərflər', misc: 'Digər', undo: 'Geri al', redo: 'İrəli al', open: 'Aç', new: 'Yeni', copy: 'Kopyala', download: 'Yüklə', clear: 'Təmizlə', lineNumbers: 'Sətir nömrələri', wrapText: 'Sətir sarılması', special: 'Xüsusi', diacritics: 'Diakritiklər', normalisation: 'Normallaşdırma', area: 'Sahə', bottom: 'Aşağıda', top: 'Yuxarıda', left: 'Solda', right: 'Sağda', cancel: 'Ləğv et', save: 'Saxla', confirm: 'Təsdiqlə', files: 'Fayllar', newFile: 'Yeni fayl', openFile: 'Faylı aç', delete: 'Sil', deleteFile: 'Faylı sil', favorite: 'Ulduzla', favorites: 'Seçilmişlər', recent: 'Son', search: 'Axtar', uppercase: 'Böyük', lowercase: 'Kiçik' }

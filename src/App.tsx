@@ -15,7 +15,7 @@ import {
 import { applyDiacriticRepeated, countGraphemes, countLines, countWords, insertAtSelection, segmentGraphemes, type Selection } from './lib/editor'
 import { createLocalFile, deleteLocalFile, listLocalFiles, saveLocalFile, type LocalFile } from './lib/files'
 import { LANGUAGE_OPTIONS, translate, type LanguageId, type TranslationKey } from './i18n'
-import { applyMenuScript, type MenuScript } from './lib/menuScripts'
+import { applyMenuScript, menuScriptLabel, type MenuScript } from './lib/menuScripts'
 import { getDiacriticShortcut, getDiacriticShortcutCode } from './lib/shortcuts'
 
 type Theme = 'light' | 'dark'
@@ -211,15 +211,19 @@ function DiacriticGlyph({ keyItem }: { keyItem: KeyItem }) {
   )
 }
 
-function KeyButton({ keyItem, selected, favorite, selectionMode, showFavoriteMark = true, showShortcut = false, onInsert, onToggleSelection, onMouseDown }: { keyItem: KeyItem; selected: boolean; favorite: boolean; selectionMode: boolean; showFavoriteMark?: boolean; showShortcut?: boolean; onInsert: (key: KeyItem, shiftKey?: boolean) => void; onToggleSelection: (key: KeyItem) => void; onMouseDown?: (event: ReactMouseEvent<HTMLElement>) => void }) {
+function KeyButton({ keyItem, selected, favorite, selectionMode, menuScript, showFavoriteMark = true, showShortcut = false, onInsert, onToggleSelection, onMouseDown }: { keyItem: KeyItem; selected: boolean; favorite: boolean; selectionMode: boolean; menuScript: MenuScript; showFavoriteMark?: boolean; showShortcut?: boolean; onInsert: (key: KeyItem, shiftKey?: boolean) => void; onToggleSelection: (key: KeyItem) => void; onMouseDown?: (event: ReactMouseEvent<HTMLElement>) => void }) {
   const onClick = (event: ReactMouseEvent<HTMLButtonElement>) => selectionMode ? onToggleSelection(keyItem) : onInsert(keyItem, event.shiftKey)
-  const label = keyItem.category === 'standard' ? `Standart harf ${keyItem.label}` : `Diyakritik ${keyItem.label}`
+  const scriptText = (value: string) => applyMenuScript(value, menuScript)
+  const label = `${scriptText(keyItem.category === 'standard' ? 'Standart harf' : 'Diyakritik')} ${keyItem.label}`
   const shortcut = showShortcut && keyItem.category === 'diacritic' ? getDiacriticShortcutCode(keyItem.id) : undefined
+  const shortcutLabel = shortcut ? ` · ${scriptText('Kısayol')} ${shortcut}` : ''
+  const selectionLabel = selectionMode ? ` ${scriptText(selected ? 'seçildi' : 'seçilmedi')}` : ''
+  const detail = keyItem.description ? scriptText(keyItem.description) : keyItem.codePoints.join(' ')
   return (
-    <button className={`key-button ${keyItem.category === 'diacritic' ? 'is-diacritic' : ''} ${selected ? 'is-selected' : ''} ${favorite && showFavoriteMark ? 'is-favorite' : ''} ${selectionMode ? 'is-selection-mode' : ''}`} type="button" data-key-id={keyItem.id} title={`${keyItem.label}${shortcut ? ` · ${shortcut}` : ''} · ${keyItem.description ?? keyItem.codePoints.join(' ')}`} aria-label={`${label}${shortcut ? ` · Kısayol ${shortcut}` : ''}${selectionMode ? selected ? ' seçildi' : ' seçilmedi' : ''}`} aria-pressed={selectionMode ? selected : undefined} onMouseDown={onMouseDown} onClick={onClick}>
+    <button className={`key-button ${keyItem.category === 'diacritic' ? 'is-diacritic' : ''} ${selected ? 'is-selected' : ''} ${favorite && showFavoriteMark ? 'is-favorite' : ''} ${selectionMode ? 'is-selection-mode' : ''}`} type="button" data-key-id={keyItem.id} title={`${keyItem.label}${shortcut ? ` · ${shortcut}` : ''} · ${detail}`} aria-label={`${label}${shortcutLabel}${selectionLabel}`} aria-pressed={selectionMode ? selected : undefined} onMouseDown={onMouseDown} onClick={onClick}>
       {shortcut && <span className="key-shortcut" aria-hidden="true">{shortcut}</span>}
       {keyItem.category === 'diacritic' ? <DiacriticGlyph keyItem={keyItem} /> : <span>{keyItem.label}</span>}
-      {!selectionMode && showFavoriteMark && favorite && <span className="key-favorite-mark" aria-label="Sık kullanılan">★</span>}
+      {!selectionMode && showFavoriteMark && favorite && <span className="key-favorite-mark" aria-label={scriptText('Sık kullanılan')}>★</span>}
       {selectionMode && <span className="selection-check"><Icon name="check" size={12} /></span>}
     </button>
   )
@@ -287,10 +291,9 @@ function App() {
 
   const currentFile = files.find((file) => file.id === currentFileId)
   const theme: Theme = themePreference === 'system' ? (systemDark ? 'dark' : 'light') : themePreference
-  const t = (key: TranslationKey) => translate(language, key)
-  const mt = (key: TranslationKey) => applyMenuScript(t(key), menuScript)
-  const menuScriptTranslationKey = (value: MenuScript): TranslationKey => value === 'native' ? 'nativeScript' : value === 'latin' ? 'latinScript' : 'cyrillicScript'
-  const scriptLabel = (value: MenuScript) => t(menuScriptTranslationKey(value))
+  const t = (key: TranslationKey) => applyMenuScript(translate(language, key), menuScript)
+  const mt = t
+  const scriptLabel = (value: MenuScript) => menuScriptLabel(language, value)
 
   const showShortcutInfo = (id: 'shift' | 'caps' | 'qq') => {
     if (shortcutInfoTimer.current !== null) window.clearTimeout(shortcutInfoTimer.current)
@@ -961,8 +964,8 @@ function App() {
 
   const renderKeys = (keys: KeyItem[], selectionMode = false, showFavoriteMark = true) => (
     <div className="keys-grid">
-      {keys.map((key) => <KeyButton key={key.id} keyItem={key} selected={selectionMode ? favoriteDraft.includes(key.id) : false} favorite={favorites.includes(key.id)} selectionMode={selectionMode} showFavoriteMark={showFavoriteMark} showShortcut={shortcutMode} onInsert={insertKey} onToggleSelection={toggleFavoriteSelection} onMouseDown={keepEditorFocus} />)}
-      {keys.length === 0 && <p className="empty-keys">Bu ölçütle eşleşen karakter yok.</p>}
+      {keys.map((key) => <KeyButton key={key.id} keyItem={key} selected={selectionMode ? favoriteDraft.includes(key.id) : false} favorite={favorites.includes(key.id)} selectionMode={selectionMode} menuScript={menuScript} showFavoriteMark={showFavoriteMark} showShortcut={shortcutMode} onInsert={insertKey} onToggleSelection={toggleFavoriteSelection} onMouseDown={keepEditorFocus} />)}
+      {keys.length === 0 && <p className="empty-keys">{t('noMatches')}</p>}
     </div>
   )
 
@@ -973,15 +976,15 @@ function App() {
     const hasVisibleMinus = count !== undefined
     return (
       <div className="diacritic-adjuster" key={key.id}>
-        <button className={`diacritic-stepper-button ${hasVisibleMinus ? '' : 'is-placeholder'}`} type="button" disabled={!hasVisibleMinus || count === 0} onMouseDown={keepEditorFocus} onClick={() => changeDiacriticCount(key, -1)} aria-label={`${key.label} sayısını azalt`}>
+        <button className={`diacritic-stepper-button ${hasVisibleMinus ? '' : 'is-placeholder'}`} type="button" disabled={!hasVisibleMinus || count === 0} onMouseDown={keepEditorFocus} onClick={() => changeDiacriticCount(key, -1)} aria-label={`${key.label} ${mt('decreaseCount')}`}>
             <Icon name="minus" size={16} />
         </button>
-        <button className="diacritic-apply" type="button" disabled={hasExplicitZero} onMouseDown={keepEditorFocus} onClick={() => insertToolbarMark(key, repeat)} title={`${key.label} ekle${count && count > 1 ? ` · ${count} kez` : ''}`}>
+        <button className="diacritic-apply" type="button" disabled={hasExplicitZero} onMouseDown={keepEditorFocus} onClick={() => insertToolbarMark(key, repeat)} title={`${key.label} ${mt('addDiacritic')}${count && count > 1 ? ` · ${count} ${mt('times')}` : ''}`}>
           <DiacriticGlyph keyItem={key} />
           <span>{key.label}</span>
           <span className="diacritic-count" aria-live="polite">{count === undefined ? '' : count}</span>
         </button>
-        <button className="diacritic-stepper-button" type="button" onMouseDown={keepEditorFocus} onClick={() => changeDiacriticCount(key, 1)} aria-label={`${key.label} sayısını artır`}>
+        <button className="diacritic-stepper-button" type="button" onMouseDown={keepEditorFocus} onClick={() => changeDiacriticCount(key, 1)} aria-label={`${key.label} ${mt('increaseCount')}`}>
             <Icon name="plus" size={16} />
         </button>
       </div>
@@ -1041,11 +1044,11 @@ function App() {
   }
 
   const renderDiacriticGroups = (keys: KeyItem[], selectionMode = false, showFavoriteMark = true) => {
-    const groups: Array<[string, 'above' | 'below' | 'bridge']> = [['Üstte', 'above'], ['Altta', 'below'], ['Bağlayıcı', 'bridge']]
+    const groups: Array<[TranslationKey, 'above' | 'below' | 'bridge']> = [['above', 'above'], ['below', 'below'], ['combining', 'bridge']]
     return <div className="diacritic-groups">{groups.map(([label, position]) => {
       const groupKeys = keys.filter((key) => (key.position ?? 'above') === position)
       if (!groupKeys.length) return null
-      return <section className="palette-group" key={position}><div className="group-heading"><span>{label}</span><span>{groupKeys.length}</span></div>{renderKeys(groupKeys, selectionMode, showFavoriteMark)}</section>
+      return <section className="palette-group" key={position}><div className="group-heading"><span>{t(label)}</span><span>{groupKeys.length}</span></div>{renderKeys(groupKeys, selectionMode, showFavoriteMark)}</section>
     })}</div>
   }
 
@@ -1053,13 +1056,13 @@ function App() {
     const selectionMode = favoriteMode
     const showFavoriteMark = paletteFilter !== 'favorites' && !selectionMode
     let content: ReactNode
-    if (query.trim()) content = <div className="search-results"><div className="search-heading">Arama sonuçları <span>{searchKeys.length}</span></div><div className="palette-group"><div className="group-heading"><span>Harfler</span></div>{renderKeys(searchKeys.filter((key) => key.category === 'standard'), selectionMode, showFavoriteMark)}</div>{renderDiacriticGroups(searchKeys.filter((key) => key.category === 'diacritic'), selectionMode, showFavoriteMark)}</div>
-    else if (paletteFilter === 'favorites') content = <div className="favorite-groups"><div className="palette-group"><div className="group-heading"><span>Harfler</span><span>{favoriteKeys.filter((key) => key.category === 'standard').length}</span></div>{renderKeys(favoriteKeys.filter((key) => key.category === 'standard'), selectionMode, false)}</div>{renderDiacriticGroups(favoriteKeys.filter((key) => key.category === 'diacritic'), selectionMode, false)}</div>
-    else if (paletteFilter === 'recent') content = <div className="favorite-groups"><div className="palette-group"><div className="group-heading"><span>Son kullanılan harfler</span></div>{renderKeys(recentKeys.filter((key) => key.category === 'standard'), selectionMode, showFavoriteMark)}</div>{renderDiacriticGroups(recentKeys.filter((key) => key.category === 'diacritic'), selectionMode, showFavoriteMark)}</div>
+    if (query.trim()) content = <div className="search-results"><div className="search-heading">{t('searchResults')} <span>{searchKeys.length}</span></div><div className="palette-group"><div className="group-heading"><span>{t('letters')}</span></div>{renderKeys(searchKeys.filter((key) => key.category === 'standard'), selectionMode, showFavoriteMark)}</div>{renderDiacriticGroups(searchKeys.filter((key) => key.category === 'diacritic'), selectionMode, showFavoriteMark)}</div>
+    else if (paletteFilter === 'favorites') content = <div className="favorite-groups"><div className="palette-group"><div className="group-heading"><span>{t('letters')}</span><span>{favoriteKeys.filter((key) => key.category === 'standard').length}</span></div>{renderKeys(favoriteKeys.filter((key) => key.category === 'standard'), selectionMode, false)}</div>{renderDiacriticGroups(favoriteKeys.filter((key) => key.category === 'diacritic'), selectionMode, false)}</div>
+    else if (paletteFilter === 'recent') content = <div className="favorite-groups"><div className="palette-group"><div className="group-heading"><span>{t('recentLetters')}</span></div>{renderKeys(recentKeys.filter((key) => key.category === 'standard'), selectionMode, showFavoriteMark)}</div>{renderDiacriticGroups(recentKeys.filter((key) => key.category === 'diacritic'), selectionMode, showFavoriteMark)}</div>
     else if (paletteMode === 'diacritic') content = renderDiacriticGroups(regularKeys, selectionMode, showFavoriteMark)
     else content = renderKeys(regularKeys, selectionMode, showFavoriteMark)
     if (!favoriteMode) return content
-    return <div className="favorite-mode-content">{content}<div className="favorite-mode-actions"><span>{t('selectToFavorite')}</span><button className="confirm-button" type="button" onClick={confirmFavoriteMode} disabled={favoriteDraft.length === favorites.length && favoriteDraft.every((id) => favorites.includes(id))}>{t('confirm')}</button></div></div>
+    return <div className="favorite-mode-content">{content}<div className="favorite-mode-actions"><span>{mt('selectToFavorite')}</span><button className="confirm-button" type="button" onClick={confirmFavoriteMode} disabled={favoriteDraft.length === favorites.length && favoriteDraft.every((id) => favorites.includes(id))}>{mt('confirm')}</button></div></div>
   }
 
   return (
@@ -1095,8 +1098,8 @@ function App() {
                   <span data-menu-overflow>…</span>
                 </div>
                 <div className="history-actions">
-                  <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={undo} disabled={past.length === 0} title="Geri al" aria-label="Geri al"><Icon name="undo" size={18} /></button>
-                  <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={redo} disabled={future.length === 0} title="İleri al" aria-label="İleri al"><Icon name="redo" size={18} /></button>
+                  <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={undo} disabled={past.length === 0} title={mt('undo')} aria-label={mt('undo')}><Icon name="undo" size={18} /></button>
+                  <button className="history-button" type="button" onMouseDown={keepEditorFocus} onClick={redo} disabled={future.length === 0} title={mt('redo')} aria-label={mt('redo')}><Icon name="redo" size={18} /></button>
                 </div>
                 {primaryMenuItems.slice(0, visibleMenuCount).map((item) => <span className="menu-slot" key={item.id}>{menuButton(item.id, mt(item.id))}{openMenu === item.id && <div className="menu-popover" role="menu">{openMenuItems(item.id)}</div>}</span>)}
                 {visibleMenuCount < primaryMenuItems.length && <span className="menu-slot menu-slot-overflow">{menuButton('more', '…', { compact: true })}{openMenu === 'more' && <div className="menu-popover menu-popover-right" role="menu">{openMenuItems('more')}</div>}</span>}
@@ -1107,31 +1110,31 @@ function App() {
               {showLineNumbers && <div className="line-number-gutter" ref={lineNumbersRef} aria-hidden="true">{lineNumberCounts.flatMap((count, index) => Array.from({ length: count }, (_, wrappedIndex) => <span className={wrappedIndex === 0 ? 'line-number-logical' : 'line-number-continuation'} key={`${index}-${wrappedIndex}`}>{wrappedIndex === 0 ? String(index + 1).padStart(2, '0') : '·'}</span>))}</div>}
               <textarea ref={textareaRef} className={`editor-textarea ${wrapText ? 'is-wrapped' : 'is-nowrap'}`} value={editor.text} onChange={onTextChange} onKeyDown={shortcutTransform} onSelect={updateSelection} onKeyUp={onTextKeyUp} onMouseDown={onTextMouseDown} onMouseUp={updateSelection} onScroll={onTextScroll} onClick={onTextClick} aria-label={t('textAreaLabel')} placeholder={t('textPlaceholder')} spellCheck={false} />
             </div>
-            {selectionToolbar.open && selectedText && <div className="selection-toolbar" style={{ top: selectionToolbar.top, left: selectionToolbar.left }} role="toolbar" aria-label="Seçili metin araçları">
-              {selectionHasMultipleCharacters ? <div className="selection-bulk-actions" role="group" aria-label="Toplu harf işlemleri">
-                <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('upper')} title="Büyük harfe çevir">Büyük</button>
-                <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('lower')} title="Küçük harfe çevir">Küçük</button>
-                {selectionHasMultipleWords && <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('title')} title="Başlık biçimine çevir">{t('titleCase')}</button>}
-              </div> : <div className="selection-variants" role="group" aria-label="Harf biçimleri">{selectionVariants.slice(0, 8).map((key) => <button className={`selection-glyph ${selectedVariantId === key.id ? 'is-selected' : ''}`} type="button" key={key.id} onMouseDown={keepEditorFocus} onClick={() => transformSelection('variant', key)} title={`${key.label} olarak değiştir`} aria-pressed={selectedVariantId === key.id}>{key.label}</button>)}</div>}
+            {selectionToolbar.open && selectedText && <div className="selection-toolbar" style={{ top: selectionToolbar.top, left: selectionToolbar.left }} role="toolbar" aria-label={mt('selectedTextTools')}>
+              {selectionHasMultipleCharacters ? <div className="selection-bulk-actions" role="group" aria-label={mt('bulkLetterActions')}>
+                <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('upper')} title={mt('uppercaseAction')}>{mt('uppercase')}</button>
+                <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('lower')} title={mt('lowercaseAction')}>{mt('lowercase')}</button>
+                {selectionHasMultipleWords && <button className="selection-tool" type="button" onMouseDown={keepEditorFocus} onClick={() => transformSelection('title')} title={mt('titleCaseAction')}>{mt('titleCase')}</button>}
+              </div> : <div className="selection-variants" role="group" aria-label={mt('letterForms')}>{selectionVariants.slice(0, 8).map((key) => <button className={`selection-glyph ${selectedVariantId === key.id ? 'is-selected' : ''}`} type="button" key={key.id} onMouseDown={keepEditorFocus} onClick={() => transformSelection('variant', key)} title={`${key.label} ${mt('changeTo')}`} aria-pressed={selectedVariantId === key.id}>{key.label}</button>)}</div>}
               <span className="selection-divider" />
-              <button className={`selection-tool selection-tool-icon ${selectionToolbar.marksOpen ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={toggleSelectionMarks} title="Diyakritik ekle" aria-expanded={selectionToolbar.marksOpen}><Icon name="text" size={15} /><span>Diyakritik</span></button>
+              <button className={`selection-tool selection-tool-icon ${selectionToolbar.marksOpen ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={toggleSelectionMarks} title={mt('addDiacritic')} aria-expanded={selectionToolbar.marksOpen}><Icon name="text" size={15} /><span>{mt('diacriticLabel')}</span></button>
               {selectionToolbar.marksOpen && <div className="selection-marks">{diacriticKeys.map(renderSelectionDiacritic)}</div>}
             </div>}
             <div className="sheet-rule" aria-hidden="true"><span /><b>·</b><span /></div>
-            <div className="document-footer"><span>{countLines(editor.text)} satır, {countWords(editor.text)} kelime, {countGraphemes(editor.text)} karakter</span></div>
+            <div className="document-footer"><span>{countLines(editor.text)} {t('lineCount')}, {countWords(editor.text)} {t('wordCount')}, {countGraphemes(editor.text)} {t('characterCount')}</span></div>
           </div>
         </section>
 
-        <aside className="palette-panel" aria-label="Transkripsiyon karakterleri">
+        <aside className="palette-panel" aria-label={mt('transcriptionCharacters')}>
           <div className="palette-bar">
-              <div className="palette-tabs" role="tablist" aria-label="Karakter görünümü">
-              <button className={paletteFilter === 'all' && paletteMode === 'uppercase' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'uppercase'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('uppercase') }}>Büyük</button>
-              <button className={paletteFilter === 'all' && paletteMode === 'lowercase' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'lowercase'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('lowercase') }}>Küçük</button>
-              <button className={paletteFilter === 'all' && paletteMode === 'special' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'special'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('special') }}>Özel</button>
+              <div className="palette-tabs" role="tablist" aria-label={mt('paletteView')}>
+              <button className={paletteFilter === 'all' && paletteMode === 'uppercase' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'uppercase'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('uppercase') }}>{mt('uppercase')}</button>
+              <button className={paletteFilter === 'all' && paletteMode === 'lowercase' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'lowercase'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('lowercase') }}>{mt('lowercase')}</button>
+              <button className={paletteFilter === 'all' && paletteMode === 'special' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'special'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('special') }}>{mt('special')}</button>
               <button className={paletteFilter === 'all' && paletteMode === 'diacritic' ? 'palette-tab is-active' : 'palette-tab'} type="button" role="tab" aria-selected={paletteFilter === 'all' && paletteMode === 'diacritic'} onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter('all'); setPaletteMode('diacritic') }}><span className="diacritics-label-long">{t('diacritics')}</span><span className="diacritics-label-short">{t('diacriticShort')}</span></button>
             </div>
-            <div className="palette-actions"><button className={`palette-action ${favoriteMode ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={favoriteMode ? cancelFavoriteMode : beginFavoriteMode} title={favoriteMode ? 'Yıldız modundan çık' : 'Yıldızlama modunu aç'} aria-pressed={favoriteMode}><Icon name="star" size={17} /><span>{favoriteMode ? 'Vazgeç' : 'Yıldızla'}</span></button><button className={`palette-action ${paletteFilter === 'favorites' ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter(paletteFilter === 'favorites' ? 'all' : 'favorites'); setFavoriteMode(false) }} title="Sık kullanılanlar" aria-label="Sık kullanılanlar" aria-pressed={paletteFilter === 'favorites'}><Icon name="star" size={17} /><span>Sık</span></button><button className={`palette-action ${paletteFilter === 'recent' ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter(paletteFilter === 'recent' ? 'all' : 'recent'); setFavoriteMode(false) }} title="Son kullanılanlar" aria-label="Son kullanılanlar" aria-pressed={paletteFilter === 'recent'} disabled={recent.length === 0}><Icon name="clock" size={17} /><span>Son</span></button><button className="palette-action" type="button" onMouseDown={keepEditorFocus} onClick={() => setSortDirection(sortDirection === 'az' ? 'za' : 'az')} title={sortDisabled ? 'Diyakritik sırası sabittir' : sortDirection === 'az' ? 'Z’den A’ya sırala' : 'A’dan Z’ye sırala'} aria-label={sortDisabled ? 'Diyakritik sırası sabit' : sortDirection === 'az' ? 'Z’den A’ya sırala' : 'A’dan Z’ye sırala'} disabled={sortDisabled}><Icon name="sort" size={17} /><span>{sortDirection === 'az' ? 'A→Z' : 'Z→A'}</span></button></div>
-            <label className="palette-search"><Icon name="search" size={15} /><span className="sr-only">Karakter ara</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ara" type="search" /></label>
+            <div className="palette-actions"><button className={`palette-action ${favoriteMode ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={favoriteMode ? cancelFavoriteMode : beginFavoriteMode} title={favoriteMode ? mt('exitFavoriteMode') : mt('openFavoriteMode')} aria-pressed={favoriteMode}><Icon name="star" size={17} /><span>{favoriteMode ? mt('cancel') : mt('favorite')}</span></button><button className={`palette-action ${paletteFilter === 'favorites' ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter(paletteFilter === 'favorites' ? 'all' : 'favorites'); setFavoriteMode(false) }} title={mt('favorites')} aria-label={mt('favorites')} aria-pressed={paletteFilter === 'favorites'}><Icon name="star" size={17} /><span>{mt('favorites')}</span></button><button className={`palette-action ${paletteFilter === 'recent' ? 'is-active' : ''}`} type="button" onMouseDown={keepEditorFocus} onClick={() => { setPaletteFilter(paletteFilter === 'recent' ? 'all' : 'recent'); setFavoriteMode(false) }} title={mt('recent')} aria-label={mt('recent')} aria-pressed={paletteFilter === 'recent'} disabled={recent.length === 0}><Icon name="clock" size={17} /><span>{mt('recent')}</span></button><button className="palette-action" type="button" onMouseDown={keepEditorFocus} onClick={() => setSortDirection(sortDirection === 'az' ? 'za' : 'az')} title={sortDisabled ? mt('sortFixed') : sortDirection === 'az' ? mt('sortToZA') : mt('sortToAZ')} aria-label={sortDisabled ? mt('sortFixed') : sortDirection === 'az' ? mt('sortToZA') : mt('sortToAZ')} disabled={sortDisabled}><Icon name="sort" size={17} /><span>{sortDirection === 'az' ? mt('sortAZ') : mt('sortZA')}</span></button></div>
+            <label className="palette-search"><Icon name="search" size={15} /><span className="sr-only">{mt('searchCharacters')}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={mt('search')} type="search" /></label>
           </div>
           <div className="palette-scroll">
             {renderPaletteContent()}
@@ -1145,7 +1148,7 @@ function App() {
 
       {favoriteConfirmOpen && <div className="modal-backdrop" role="presentation" onClick={() => setFavoriteConfirmOpen(false)}><section className="confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="favorite-heading" onClick={(event) => event.stopPropagation()}><div className="confirm-heading"><div><span className="section-kicker">{t('favoriteHeading')}</span><h2 id="favorite-heading">{t('saveSelection')}</h2></div><button className="icon-action" type="button" onClick={() => setFavoriteConfirmOpen(false)} title={t('cancel')} aria-label={t('cancel')}><Icon name="close" size={17} /></button></div><div className="change-list">{favoriteAdditions.length > 0 && <div><span className="change-label">{t('additions')}</span><p>{favoriteAdditions.map((key) => key.label).join(' · ')}</p></div>}{favoriteRemovals.length > 0 && <div><span className="change-label">{t('removals')}</span><p>{favoriteRemovals.map((key) => key.label).join(' · ')}</p></div>}</div><div className="confirm-actions"><button className="secondary-button" type="button" onClick={() => setFavoriteConfirmOpen(false)}>{t('cancel')}</button><button className="confirm-button" type="button" onClick={saveFavoriteMode}>{t('save')}</button></div></section></div>}
 
-      {clearConfirmOpen && <div className="modal-backdrop" role="presentation" onClick={() => setClearConfirmOpen(false)}><section className="confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="clear-heading" onClick={(event) => event.stopPropagation()}><div className="confirm-heading"><div><span className="section-kicker">{t('file')}</span><h2 id="clear-heading">{t('clear')}?</h2></div><button className="icon-action" type="button" onClick={() => setClearConfirmOpen(false)} title={t('cancel')} aria-label={t('cancel')}><Icon name="close" size={17} /></button></div><p className="clear-copy">{t('clear')}. Bu işlem geri alınabilir.</p><div className="confirm-actions"><button className="secondary-button" type="button" onClick={() => setClearConfirmOpen(false)}>{t('cancel')}</button><button className="confirm-button" type="button" onClick={confirmClearText}>{t('clear')}</button></div></section></div>}
+      {clearConfirmOpen && <div className="modal-backdrop" role="presentation" onClick={() => setClearConfirmOpen(false)}><section className="confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="clear-heading" onClick={(event) => event.stopPropagation()}><div className="confirm-heading"><div><span className="section-kicker">{t('file')}</span><h2 id="clear-heading">{t('clear')}?</h2></div><button className="icon-action" type="button" onClick={() => setClearConfirmOpen(false)} title={t('cancel')} aria-label={t('cancel')}><Icon name="close" size={17} /></button></div><p className="clear-copy">{t('clear')}. {t('clearWarning')}</p><div className="confirm-actions"><button className="secondary-button" type="button" onClick={() => setClearConfirmOpen(false)}>{t('cancel')}</button><button className="confirm-button" type="button" onClick={confirmClearText}>{t('clear')}</button></div></section></div>}
 
       {downloadModalOpen && <div className="modal-backdrop" role="presentation" onClick={() => setDownloadModalOpen(false)}><section className="confirm-sheet download-sheet" role="dialog" aria-modal="true" aria-labelledby="download-heading" onClick={(event) => event.stopPropagation()}><div className="confirm-heading"><div><span className="section-kicker">{t('file')}</span><h2 id="download-heading">{t('downloadText')}</h2></div><button className="icon-action" type="button" onClick={() => setDownloadModalOpen(false)} title={t('cancel')} aria-label={t('cancel')}><Icon name="close" size={17} /></button></div><label className="download-field"><span>{t('downloadFileName')}</span><input value={downloadName} onChange={(event) => setDownloadName(event.target.value)} autoFocus /></label><label className="download-field"><span>{t('format')}</span><select value={downloadFormat} onChange={(event) => setDownloadFormat(event.target.value as DownloadFormat)}><option value="txt">{t('plainText')}</option><option value="md">{t('markdown')}</option></select></label><div className="confirm-actions"><button className="secondary-button" type="button" onClick={() => setDownloadModalOpen(false)}>{t('cancel')}</button><button className="confirm-button" type="button" onClick={download}>{t('download')}</button></div></section></div>}
     </div>

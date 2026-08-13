@@ -14,7 +14,7 @@ export type MenuScriptOption = {
 export const MENU_SCRIPT_OPTIONS: MenuScriptOption[] = [
   { id: 'native', label: 'Native' },
   { id: 'latin', label: 'Latin' },
-  { id: 'cyrillic', label: 'Cyrillic' },
+  { id: 'cyrillic', label: 'Kiril' },
 ]
 
 // This is deliberately a small, reversible, display-only transliteration.
@@ -30,6 +30,20 @@ const cyrillicToLatin: Record<string, string> = {
   а: 'a', б: 'b', в: 'v', г: 'g', ғ: 'ğ', д: 'd', е: 'e', ё: 'yo', ж: 'j', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', ө: 'ö', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ү: 'ü', ф: 'f', х: 'h', ц: 'c', ч: 'ç', ш: 'ş', щ: 'şç', ы: 'ı', э: 'e', ю: 'yu', я: 'ya', ь: '', ъ: '',
 }
 
+// Keep stable technical names readable in every menu script. These are labels
+// and notation, not prose: NFC/NFD, keyboard shortcuts, script names, and
+// diacritic names such as grave and acute must not become transliterations.
+const technicalTermPattern = /NFC|NFD|Caps Lock|Shift|QQ|Latin|Kiril|Cyrillic|Native|Unicode|grave|acute|breve|caron|macron(?:-below)?|diaeresis(?:-below)?|dot-(?:above|below)|ring-(?:above|below)|vertical-line-above|tie-(?:above|below)|syllabic|U\+[0-9A-F]+/giu
+
+function applyWithProtectedTechnicalTerms(value: string, transform: (input: string) => string) {
+  const protectedTerms: string[] = []
+  const masked = value.replace(technicalTermPattern, (term) => {
+    const index = protectedTerms.push(term) - 1
+    return `\uE000${index}\uE001`
+  })
+  return transform(masked).replace(/\uE000(\d+)\uE001/gu, (_, index: string) => protectedTerms[Number(index)] ?? '')
+}
+
 function replaceCharacters(value: string, table: Record<string, string>) {
   return Array.from(value, (character) => table[character] ?? character).join('')
 }
@@ -43,12 +57,12 @@ export function toLatin(value: string) {
 }
 
 export function applyMenuScript(value: string, script: MenuScript) {
-  if (script === 'cyrillic') return toCyrillic(value)
-  if (script === 'latin') return toLatin(value)
+  if (script === 'cyrillic') return applyWithProtectedTechnicalTerms(value, toCyrillic)
+  if (script === 'latin') return applyWithProtectedTechnicalTerms(value, toLatin)
   return value
 }
 
 export function menuScriptLabel(language: LanguageId, script: MenuScript) {
   if (script === 'native') return language === 'tr' ? 'Yerel' : 'Native'
-  return script === 'latin' ? 'Latin' : 'Cyrillic'
+  return script === 'latin' ? 'Latin' : 'Kiril'
 }

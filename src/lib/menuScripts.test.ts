@@ -15,6 +15,15 @@ describe('menu-only script display', () => {
   it('keeps native display unchanged and exposes stable selector labels', () => {
     expect(applyMenuScript('Dosya', 'native')).toBe('Dosya')
     expect(menuScriptLabel('tr', 'native')).toBe('Yerel')
-    expect(menuScriptLabel('en', 'cyrillic')).toBe('Cyrillic')
+    expect(menuScriptLabel('en', 'cyrillic')).toBe('Kiril')
+  })
+
+  it('keeps technical terms unchanged while converting surrounding labels', () => {
+    expect(applyMenuScript('Normalleştirme · NFC · Shift · grave · acute · Kiril', 'cyrillic')).toBe('Нормаллештирме · NFC · Shift · grave · acute · Kiril')
+  })
+
+  it('converts the status line, palette controls, groups, and accessibility prose', () => {
+    expect(applyMenuScript('1 satır, 0 kelime, 0 karakter', 'cyrillic')).toBe('1 сатыр, 0 келиме, 0 карактер')
+    expect(applyMenuScript('Büyük Küçük Özel Diyakritikler Yıldızla Sık Son A→Z Karakter ara Üstte Altta Bağlayıcı', 'cyrillic')).toBe('Бүйүк Күчүк Өзел Дийакритиклер Йылдызла Сык Сон А→З Карактер ара Үстте Алтта Бағлайыцы')
   })
 })
