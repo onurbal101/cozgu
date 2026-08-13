@@ -24,7 +24,7 @@ export type TranslationTable = Partial<Record<TranslationKey, string>>
 
 export const LANGUAGE_OPTIONS: Array<{ id: LanguageId; label: string }> = [
   { id: 'tr', label: 'Türkçe' },
-  { id: 'az', label: 'Azərbaycanca' },
+  { id: 'az', label: 'Azerice' },
   { id: 'uz', label: 'O‘zbekcha' },
   { id: 'ug', label: 'ئۇيغۇرچە' },
   { id: 'kk', label: 'Қазақша' },
