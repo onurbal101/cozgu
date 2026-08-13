@@ -1,7 +1,7 @@
 export type LanguageId = 'tr' | 'az' | 'uz' | 'ug' | 'kk' | 'tk' | 'tt' | 'ky' | 'ba' | 'cv' | 'en' | 'de' | 'fr' | 'ru' | 'zh'
 
 export type TranslationKey =
-  | 'theme' | 'language' | 'system' | 'dark' | 'light'
+  | 'theme' | 'language' | 'script' | 'nativeScript' | 'latinScript' | 'cyrillicScript' | 'scriptInfo' | 'system' | 'dark' | 'light'
   | 'file' | 'edit' | 'view' | 'characters' | 'misc'
   | 'undo' | 'redo' | 'open' | 'new' | 'copy' | 'download' | 'clear'
   | 'lineNumbers' | 'wrapText' | 'special' | 'diacritics' | 'shortcuts' | 'shortcutsInfo' | 'shiftShortcut' | 'capsLockShortcut' | 'qqShortcut' | 'shiftShortcutInfo' | 'capsLockShortcutInfo' | 'qqShortcutInfo' | 'titleCase' | 'qqShortcuts' | 'capsLockBehavior' | 'shiftBehavior'
@@ -37,7 +37,7 @@ export const LANGUAGE_OPTIONS: Array<{ id: LanguageId; label: string }> = [
 export const TURKIC_LANGUAGES = new Set<LanguageId>(['tr', 'az', 'uz', 'ug', 'kk', 'tk', 'tt', 'ky', 'ba', 'cv'])
 
 const turkish: Record<TranslationKey, string> = {
-  theme: 'Tema', language: 'Dil', system: 'Sistem', dark: 'Koyu', light: 'Açık',
+  theme: 'Tema', language: 'Dil', script: 'Yazı sistemi', nativeScript: 'Yerel', latinScript: 'Latin', cyrillicScript: 'Kiril', scriptInfo: 'Yalnızca menü yazılarını değiştirir; metninize, karakter paletine ve dışa aktarılan dosyalara dokunmaz.', system: 'Sistem', dark: 'Koyu', light: 'Açık',
   file: 'Dosya', edit: 'Düzenle', view: 'Görünüm', characters: 'Karakterler', misc: 'Diğer',
   undo: 'Geri al', redo: 'İleri al', open: 'Aç', new: 'Yeni', copy: 'Kopyala', download: 'İndir', clear: 'Temizle',
   lineNumbers: 'Satır numaraları', wrapText: 'Satır kaydırma', special: 'Özel', diacritics: 'Diyakritikler', shortcuts: 'Kısayollar', shortcutsInfo: 'Kısayolları açın ve karakter paletini klavyenizle daha hızlı kullanın.', shiftShortcut: 'Shift', capsLockShortcut: 'Caps Lock', qqShortcut: 'QQ', shiftShortcutInfo: 'Basılı tuttuğunuz sürece karakter paletini Büyük görünümüne geçirir.', capsLockShortcutInfo: 'Caps Lock açıldığında karakter paletini Büyük görünümüne geçirir; paleti elle değiştirirseniz otomatik geçiş durur.', qqShortcutInfo: 'Bir harften sonra Q, W veya X tuşlarına iki kez basarak özel biçime geçin. Diyakritikler için 1, 2 veya 3 ile satırı seçin; ardından kısayola basın (Üstte: 11, 12, 13, 1q, 1w, 1e, 1z, 1x, 1c; Altta: 2q, 2w, 2e, 2a, 2s; Bağlayıcı: 31, 32).', titleCase: 'Başlık', qqShortcuts: 'QQ kısayolları', capsLockBehavior: 'Caps Lock davranışı', shiftBehavior: 'Shift davranışı',
@@ -52,7 +52,7 @@ const turkish: Record<TranslationKey, string> = {
 }
 
 const english: Record<TranslationKey, string> = {
-  theme: 'Theme', language: 'Language', system: 'System', dark: 'Dark', light: 'Light',
+  theme: 'Theme', language: 'Language', script: 'Script', nativeScript: 'Native', latinScript: 'Latin', cyrillicScript: 'Cyrillic', scriptInfo: 'Changes menu labels only. Your text, character palette, and exported files stay unchanged.', system: 'System', dark: 'Dark', light: 'Light',
   file: 'File', edit: 'Edit', view: 'View', characters: 'Characters', misc: 'Misc.',
   undo: 'Undo', redo: 'Redo', open: 'Open', new: 'New', copy: 'Copy', download: 'Download', clear: 'Clear',
   lineNumbers: 'Line numbers', wrapText: 'Wrap lines', special: 'Special', diacritics: 'Diacritics', shortcuts: 'Shortcuts', shortcutsInfo: 'Enable these shortcuts to use the character palette faster from the keyboard.', shiftShortcut: 'Shift', capsLockShortcut: 'Caps Lock', qqShortcut: 'QQ', shiftShortcutInfo: 'Temporarily shows the Uppercase palette while you hold Shift.', capsLockShortcutInfo: 'Shows the Uppercase palette when Caps Lock turns on; manual palette changes stop the automatic switch.', qqShortcutInfo: 'Press Q, W, or X twice after a letter for its next special form. For diacritics, start with 1, 2, or 3 to choose a row, then use its key (Above: 11, 12, 13, 1q, 1w, 1e, 1z, 1x, 1c; Below: 2q, 2w, 2e, 2a, 2s; Combining: 31, 32).', titleCase: 'Title case', qqShortcuts: 'QQ shortcuts', capsLockBehavior: 'Caps Lock behaviour', shiftBehavior: 'Shift behaviour',
